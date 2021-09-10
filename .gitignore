@@ -1,5 +1,4 @@
 .bitrise.secrets.yml
 *.ipa
-BitriseDemo.xcodeproj/*
 *.zip
 codesigndoc_exports/*

@@ -1,0 +1,34 @@
+format_version: "8"
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+project_type: ios
+app:
+  envs:
+  - BITRISE_PROJECT_PATH: BitriseDemo.xcodeproj
+  - BITRISE_SCHEME: BitriseDemo
+  - BITRISE_EXPORT_METHOD: app-store
+workflows:
+  build:
+    envs:
+    - TEST_FILE_PATH: ./test-cases-devices.txt
+      opts:
+        is_expand: false
+    steps:
+    - activate-ssh-key@4:
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - git-clone@6: {}
+    - cache-pull@2: {}
+    - recreate-user-schemes@1:
+        inputs:
+        - project_path: $BITRISE_SOURCE_DIR
+    - xcode-test@3: {}
+    - certificate-and-profile-installer@1: {}
+    - xcode-archive@3:
+        inputs:
+        - export_method: app-store
+    - deploy-to-bitrise-io@1:
+        inputs:
+        - notify_email_list: $EMAIL_RECIPIENTS
+    - script@1:
+        inputs:
+        - content: "#!/usr/bin/env bash\n# fail if any commands fails\nset -e\n# debug log\nset -x\n\n#!/bin/bash\n\necho $BITRISE_PUBLIC_INSTALL_PAGE_URL\necho $BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP\necho $BITRISE_PERMANENT_DOWNLOAD_URL_MAP\n\nURL=\"https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/builds/${BITRISE_BUILD_SLUG}/artifacts\"\nACCEPT=\"accept: application/json\"\nAUTHORIZATION=\"Authorization: tZwkniGPZjrirdW4327jem40Mme-cdTwaeEYU8ahbhUHEljrpTWj99Sf6NuYlcoQQy8Y-OK5Cig8FexjlzDreQ\"\n\n\nBUILD_ARTIFACTS=$(curl \"$URL\" -H \"$ACCEPT\" -H \"$AUTHORIZATION\" | jq '.data')\n\necho \"${BUILD_ARTIFACTS}\" | jq -c '.[]'\n\nHTML=\".html\"\n\nfor row in $(echo \"$BUILD_ARTIFACTS\" | jq -r '.[] | @base64'); do\n    _jq() {\n    \tDECODED_TITLE=$(echo ${row} | base64 --decode | jq -c '.title')\n    \tif grep -q \"$HTML\" <<< \"$DECODED_TITLE\"; then\n    \t\tARTIFACT_SLUG=$(echo ${row} | base64 --decode | jq -r '.slug')\n    \t\tARTIFACT_URL=\"$URL/$ARTIFACT_SLUG\"\n    \t\tEXPIRING_DOWNLOAD_URL=$(curl \"$RTIFACT_URL\" -H \"$ACCEPT\" -H \"$AUTHORIZATION\" | jq '.data.expiring_download_url')\n                \n    \t\tenvman add --key TEST_RESULTS_URL --value \"${EXPIRING_DOWNLOAD_URL//\\\"}\"\n    \t\techo \"${EXPIRING_DOWNLOAD_URL//\\\"}\"\n  \t\tbreak\n\tfi\n    }\n\n   echo $(_jq)\ndone\n\n# or run a script from your repository, like:\n# bash ./path/to/script.sh\n# not just bash, e.g.:\n# ruby ./path/to/script.rbA"
+    - cache-push@2: {}
