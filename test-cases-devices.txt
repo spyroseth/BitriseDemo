@@ -1,2 +1,1 @@
-BitriseDemoUITests/testExample=iPhone 12-14
-BitriseDemoUITests/testLaunchPerformance=iPhone 12-14
+BitriseDemoUITests/testExample=iPhone 11-13.6

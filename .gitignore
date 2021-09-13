@@ -2,3 +2,7 @@
 *.ipa
 *.zip
 codesigndoc_exports/*
+BrowserstackResults.txt
+FailedTests.txt
+deploy_dir
+test-cases-devices.txt
